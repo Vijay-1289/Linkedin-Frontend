@@ -1,17 +1,18 @@
-
 import { useState } from "react";
-import { Image, Share2, Send } from "lucide-react";
+import { Image, Share2, Send, Edit2, Camera } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import Post from "@/components/Post";
 
 const Profile = () => {
   const [postContent, setPostContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  const userProfile = {
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const [userProfile, setUserProfile] = useState({
     name: "Sarah Anderson",
     username: "@sarahanderson",
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
@@ -36,6 +37,36 @@ const Profile = () => {
         shares: 7,
       },
     ],
+  });
+
+  const [editForm, setEditForm] = useState({
+    name: userProfile.name,
+    username: userProfile.username,
+    bio: userProfile.bio,
+  });
+
+  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUserProfile(prev => ({
+          ...prev,
+          avatar: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    setUserProfile(prev => ({
+      ...prev,
+      name: editForm.name,
+      username: editForm.username,
+      bio: editForm.bio,
+    }));
+    setIsEditing(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,14 +109,61 @@ const Profile = () => {
         {/* Profile Header */}
         <div className="glass-card rounded-xl p-6 mb-6">
           <div className="flex items-center gap-6">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-              <AvatarFallback>SA</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{userProfile.name}</h1>
-              <p className="text-gray-600">{userProfile.username}</p>
-              <p className="mt-2 text-gray-800">{userProfile.bio}</p>
+            <div className="relative">
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
+                <AvatarFallback>{userProfile.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              </Avatar>
+              <label className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicChange}
+                  className="hidden"
+                />
+                <Camera className="w-4 h-4 text-gray-600" />
+              </label>
+            </div>
+            <div className="flex-1">
+              {isEditing ? (
+                <div className="space-y-4">
+                  <Input
+                    value={editForm.name}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Name"
+                    className="mb-2"
+                  />
+                  <Input
+                    value={editForm.username}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, username: e.target.value }))}
+                    placeholder="Username"
+                    className="mb-2"
+                  />
+                  <Textarea
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                    placeholder="Bio"
+                    className="mb-4"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveProfile}>Save</Button>
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900">{userProfile.name}</h1>
+                      <p className="text-gray-600">{userProfile.username}</p>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-gray-800">{userProfile.bio}</p>
+                </>
+              )}
             </div>
           </div>
         </div>
